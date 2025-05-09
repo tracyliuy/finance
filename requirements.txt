@@ -1,0 +1,6 @@
+backtrader==1.9.78.123
+matplotlib==3.7.1
+pandas==2.0.3
+SQLAlchemy==2.0.23
+mysql-connector-python==8.1.0
+python-dotenv==1.0.0 
