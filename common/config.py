@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 
 # 加载.env文件中的环境变量
 load_dotenv()
@@ -18,14 +19,18 @@ DATABASE_CONFIG = {
     'database': os.getenv('DB_NAME', 'finance')
 }
 
+# 构建数据库URL
+DATABASE_URL = f"mysql+pymysql://{DATABASE_CONFIG['user']}:{DATABASE_CONFIG['password']}@{DATABASE_CONFIG['host']}:{DATABASE_CONFIG['port']}/{DATABASE_CONFIG['database']}"
+
 # 数据获取器配置
 FETCHER_CONFIG = {
     'fmp': {
         'base_url': 'https://financialmodelingprep.com/api/v3',
-        'symbol': 'GOLD',  # 黄金现货
+        'symbol': 'XAUUSD',  # 黄金现货
         'historical_price': '/historical-price-full/',  # 历史价格端点
         'historical_chart': '/historical-chart/',  # 历史图表端点
         'quote': '/quote/',  # 实时报价端点
         'interval': '1day'  # 数据间隔
     }
-} 
+}
+

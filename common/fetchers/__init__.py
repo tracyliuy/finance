@@ -1,3 +1,4 @@
-from .fmp import FMPFetcher
+from .FMPFetcher import FMPFetcher
+from .BaseFetcher import BaseFetcher
 
-__all__ = ['FMPFetcher'] 
+__all__ = ['FMPFetcher', 'BaseFetcher'] 

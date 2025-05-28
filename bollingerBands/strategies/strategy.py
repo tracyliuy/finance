@@ -1,11 +1,11 @@
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
-from common.database.models import GoldPriceDB
+from common.database.GoldPriceDB import GoldPriceDB
 from sqlalchemy import text
 import logging
 import os
-from ..config import BACKTEST_CONFIG, BOLLINGER_BANDS_CONFIG
+from bollingerBands.config.backtest_config import BACKTEST_CONFIG, BOLLINGER_BANDS_CONFIG
+from common.database.BollingerBandsDB import BollingerBandsDB
 
 # 确保logs目录存在
 os.makedirs('logs', exist_ok=True)
@@ -135,17 +135,21 @@ class BollingerBandsStrategy:
             # 获取交易信号
             signals = self.generate_signals(start_date, end_date)
             if signals is None or signals.empty:
+                logger.error(f"没有找到{self.timeframe}周期的交易信号")
                 return None
                 
+            # 确保数据按日期排序
+            signals = signals.sort_index()
+            
             # 初始化回测结果
             results = pd.DataFrame(index=signals.index)
-            results['price'] = signals['price']
-            results['signal'] = signals['signal']
+            results['price'] = signals['price'].astype('float64')
+            results['signal'] = signals['signal'].astype('int64')
             results['position'] = 0  # 0表示空仓，1表示持仓
-            results['capital'] = initial_capital
-            results['holdings'] = 0.0
-            results['cash'] = initial_capital
-            results['returns'] = 0.0
+            results['capital'] = pd.Series(initial_capital, index=signals.index, dtype='float64')
+            results['holdings'] = pd.Series(0.0, index=signals.index, dtype='float64')
+            results['cash'] = pd.Series(initial_capital, index=signals.index, dtype='float64')
+            results['returns'] = pd.Series(0.0, index=signals.index, dtype='float64')
             
             # 模拟交易
             position = 0
@@ -189,7 +193,8 @@ class BollingerBandsStrategy:
                 results.loc[results.index[i], 'capital'] = results['holdings'].iloc[i] + results['cash'].iloc[i]
                 
                 # 计算收益率
-                results.loc[results.index[i], 'returns'] = (results['capital'].iloc[i] / results['capital'].iloc[i-1]) - 1
+                if results['capital'].iloc[i-1] > 0:  # 避免除以零
+                    results.loc[results.index[i], 'returns'] = (results['capital'].iloc[i] / results['capital'].iloc[i-1]) - 1
             
             # 计算累积收益率
             results['cumulative_returns'] = (1 + results['returns']).cumprod() - 1
@@ -201,21 +206,27 @@ class BollingerBandsStrategy:
             
             # 计算年化收益率
             days = (results.index[-1] - results.index[0]).days
-            annual_return = (results['capital'].iloc[-1] / initial_capital) ** (365 / days) - 1
+            if days > 0:  # 避免除以零
+                annual_return = (results['capital'].iloc[-1] / initial_capital) ** (365 / days) - 1
+            else:
+                annual_return = 0
             
             # 计算夏普比率
             risk_free_rate = BACKTEST_CONFIG['risk_free_rate']
             excess_returns = results['returns'] - risk_free_rate/252  # 转换为日化无风险利率
-            sharpe_ratio = np.sqrt(252) * excess_returns.mean() / excess_returns.std()
+            if len(excess_returns) > 1 and excess_returns.std() > 0:  # 避免除以零
+                sharpe_ratio = np.sqrt(252) * excess_returns.mean() / excess_returns.std()
+            else:
+                sharpe_ratio = 0
             
             # 打印回测结果
-            logger.info(f"\n回测结果 ({self.timeframe}):")
-            logger.info(f"初始资金: ${initial_capital:,.2f}")
-            logger.info(f"最终资金: ${results['capital'].iloc[-1]:,.2f}")
-            logger.info(f"总收益率: {results['cumulative_returns'].iloc[-1]*100:.2f}%")
-            logger.info(f"年化收益率: {annual_return*100:.2f}%")
-            logger.info(f"最大回撤: {max_drawdown*100:.2f}%")
-            logger.info(f"夏普比率: {sharpe_ratio:.2f}")
+            logger.info("\n回测结果 ({self.timeframe}):")
+            logger.info("初始资金: ${initial_capital:,.2f}")
+            logger.info("最终资金: ${results['capital'].iloc[-1]:,.2f}")
+            logger.info("总收益率: {results['cumulative_returns'].iloc[-1]*100:.2f}%")
+            logger.info("年化收益率: {annual_return*100:.2f}%")
+            logger.info("最大回撤: {max_drawdown*100:.2f}%")
+            logger.info("夏普比率: {sharpe_ratio:.2f}")
             
             return results
             

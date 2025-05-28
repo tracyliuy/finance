@@ -1,41 +1,12 @@
-from sqlalchemy import create_engine, Column, Integer, DateTime, String, Float, Text, Date, UniqueConstraint, text
+from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
-from datetime import datetime
-from ..config import DATABASE_CONFIG
+
 import os
 
 # 创建基类
 Base = declarative_base()
-
-class BollingerBands(Base):
-    """布林带数据模型"""
-    __tablename__ = 'bollinger_bands'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    date = Column(Date, nullable=False)
-    timeframe = Column(String(10), nullable=False)  # 'daily' 或 'weekly'
-    price = Column(Float, nullable=False)
-    open_price = Column(Float, nullable=True)
-    high_price = Column(Float, nullable=True)
-    low_price = Column(Float, nullable=True)
-    volume = Column(Integer, nullable=True)
-    middle_band = Column(Float, nullable=True)
-    upper_band = Column(Float, nullable=True)
-    lower_band = Column(Float, nullable=True)
-    bandwidth = Column(Float, nullable=True)
-    percent_b = Column(Float, nullable=True)
-    period = Column(Integer, nullable=False)
-    std_dev = Column(Float, nullable=False)
-    source = Column(String(50), nullable=False)
-    created_at = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-
-    # 创建唯一约束
-    __table_args__ = (
-        UniqueConstraint('date', 'timeframe', 'period', 'std_dev', name='unique_bollinger_bands'),
-    )
 
 class Database:
     """数据库基类"""

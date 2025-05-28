@@ -1,23 +1,11 @@
 from sqlalchemy import Column, Integer, String, Float, Date, DateTime, UniqueConstraint, text
 from datetime import datetime
 import pandas as pd
-from .base import Base, Database
-import logging
-import os
+from .Database import Base, Database
+from common.utils.logger import setup_logger
 
-# 确保logs目录存在
-os.makedirs('logs', exist_ok=True)
-
-# 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('logs/database.log'),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger('GoldPriceDB')
+# 设置日志记录器
+logger = setup_logger('GoldPriceDB', 'logs/database.log')
 
 class GoldPrice(Base):
     """黄金价格数据模型"""
@@ -251,4 +239,14 @@ class GoldPriceDB(Database):
             
             return min_date[0] if min_date else None, max_date[0] if max_date else None
             
-        return self.execute_transaction(_get) 
+        return self.execute_transaction(_get)
+
+    def get_latest_date(self):
+        """获取数据库中最新的日期"""
+        try:
+            with self.get_session() as session:
+                latest = session.query(GoldPrice).order_by(GoldPrice.date.desc()).first()
+                return latest.date if latest else None
+        except Exception as e:
+            logger.error(f"获取最新日期时发生错误: {str(e)}")
+            return None 

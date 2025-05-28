@@ -3,29 +3,49 @@
 """
 
 import pandas as pd
-import numpy as np
+from .GoldPriceDB import GoldPriceDB
+from sqlalchemy import text 
+from .Database import Base
+from sqlalchemy import Column, Integer, String, Float, Date, DateTime, UniqueConstraint, text
 from datetime import datetime
-from common.database.models import GoldPriceDB
-from sqlalchemy import text
-import logging
-import os
-from decimal import Decimal
 
-# 确保logs目录存在
-os.makedirs('logs', exist_ok=True)
+from common.utils.logger import setup_logger
 
-# 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('logs/bollinger_bands_models.log'),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger('BollingerBandsModels')
+# 设置日志记录器
+logger = setup_logger('BollingerBandsDB', 'logs/database.log')
 
-class BollingerBandsData:
+ 
+
+class BollingerBands(Base):
+    """布林带数据模型"""
+    __tablename__ = 'bollinger_bands'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(Date, nullable=False)
+    timeframe = Column(String(10), nullable=False)  # 'daily' 或 'weekly'
+    price = Column(Float, nullable=False)
+    open_price = Column(Float, nullable=True)
+    high_price = Column(Float, nullable=True)
+    low_price = Column(Float, nullable=True)
+    volume = Column(Integer, nullable=True)
+    middle_band = Column(Float, nullable=True)
+    upper_band = Column(Float, nullable=True)
+    lower_band = Column(Float, nullable=True)
+    bandwidth = Column(Float, nullable=True)
+    percent_b = Column(Float, nullable=True)
+    period = Column(Integer, nullable=False)
+    std_dev = Column(Float, nullable=False)
+    source = Column(String(50), nullable=False)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    # 创建唯一约束
+    __table_args__ = (
+        UniqueConstraint('date', 'timeframe', 'period', 'std_dev', name='unique_bollinger_bands'),
+    )
+
+
+class BollingerBandsDB:
     def __init__(self, period=20, std_dev=2):
         """
         初始化布林带数据模型
@@ -199,7 +219,7 @@ class BollingerBandsData:
                         )
                 
                 session.commit()
-                logger.info(f"成功保存{timeframe}数据")
+                logger.info("成功保存{timeframe}数据")
                 return True
                 
         except Exception as e:

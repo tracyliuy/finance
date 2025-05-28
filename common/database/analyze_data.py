@@ -1,6 +1,6 @@
 import pandas as pd
 from datetime import datetime, timedelta
-from .models import GoldPriceDB
+from .GoldPriceDB import GoldPriceDB
 
 def analyze_data_completeness(start_date=None, end_date=None, source='FMP'):
     """
