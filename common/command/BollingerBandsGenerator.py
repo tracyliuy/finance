@@ -1,20 +1,14 @@
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-import logging
+# 导入路径设置
+from common.utils.path import setup_project_path
+
+# 现在可以导入common模块了
+from datetime import datetime 
 from common.database.GoldPriceDB import GoldPriceDB
 from sqlalchemy import text
+from common.utils.logger import setup_logger
 
-# 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('logs/bollinger_bands.log'),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger('BollingerBandsGenerator')
+# 设置日志记录器
+logger = setup_logger('BollingerBandsGenerator', 'logs/bollinger_bands_generator.log')
 
 class BollingerBandsGenerator:
     def __init__(self, period=20, std_dev=2):
@@ -145,7 +139,7 @@ class BollingerBandsGenerator:
                         )
                 
                 session.commit()
-                logger.info("成功保存{timeframe}数据")
+                logger.info(f"成功保存{timeframe}数据")
                 return True
                 
         except Exception as e:

@@ -1,22 +1,15 @@
-import sys
-import os
+# 导入路径设置
+from common.utils.path import setup_project_path
+
+# 现在可以导入common模块了
 import pandas as pd
- 
-
-# 添加项目根目录到 Python 路径
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, project_root)
- 
-
 from datetime import datetime
 from common.fetchers import FMPFetcher
-from common.config import API_KEYS
 from common.database.GoldPriceDB import GoldPriceDB
 from common.utils.logger import setup_logger
 
 # 设置日志记录器
 logger = setup_logger('HistoricalDataFetchManager', 'logs/historical_data.log')
-
 
 class HistoricalDataFetchManager:
     """历史数据获取管理器"""

@@ -1,10 +1,8 @@
-import os
-import sys
+# 导入路径设置
+from common.utils.path import setup_project_path
 
-# 添加项目根目录到 Python 路径
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, project_root)
- 
+# 现在可以导入common模块了
+import pandas as pd
 from datetime import datetime, timedelta
 from common.fetchers import FMPFetcher
 from common.database.GoldPriceDB import GoldPriceDB
